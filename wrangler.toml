@@ -19,11 +19,12 @@ CHAT_MODEL = "@cf/meta/llama-3-8b-instruct"
 [[durable_objects.bindings]]
 name = "HA_WEBSOCKET_DO"
 class_name = "HAWebsocketDurableObject"
-script_name = "hassio-backend-worker"
+# script_name = "hassio-backend-worker"
 
 [[migrations]]
 tag = "v1"
-new_classes = ["HAWebsocketDurableObject"]
+# new_classes = ["HAWebsocketDurableObject"]
+new_sqlite_classes = ["HAWebsocketDurableObject"]
 
 [[d1_databases]]
 binding = "RECORDER_DB"
