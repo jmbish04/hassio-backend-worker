@@ -6,7 +6,10 @@
   "scripts": {
     "build": "wrangler deploy --dry-run --outdir=dist",
     "check": "tsc --noEmit",
-    "lint": "biome lint ."
+    "lint": "biome lint .",
+    "deploy": "npm run migrate:remote && wrangler deploy",
+    "migrate:remote": "wrangler d1 migrations apply RECORDER_DB --remote && wrangler d1 migrations apply CONFIG_DB --remote",
+    "migrate:local": "wrangler d1 migrations apply RECORDER_DB --local && wrangler d1 migrations apply CONFIG_DB --local"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.8.3",
