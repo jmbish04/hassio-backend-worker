@@ -26,11 +26,13 @@ new_classes = ["HAWebsocketDurableObject"]
 binding = "RECORDER_DB"
 database_name = "hassio-backend-worker-ha-clone"
 database_id = "b9694e5f-c046-4e3b-9c0b-489c61b4ab37"
+migrations_dir = "migrations/recorder"
 
 [[d1_databases]]
 binding = "CONFIG_DB"
 database_name = "hassio-backend-worker-config"
 database_id = "c108317d-82e9-4b25-b2ee-bf592321568c"
+migrations_dir = "migrations/config"
 
 [[kv_namespaces]]
 binding = "MEMORY_KV"
