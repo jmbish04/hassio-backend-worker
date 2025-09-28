@@ -158,7 +158,11 @@
           for (const card of cards) {
             const el = document.createElement('div');
             el.className = 'status-card';
-            el.innerHTML = `<h3>${card.title}</h3><code>${typeof card.value === 'string' ? card.value : JSON.stringify(card.value)}</code>`;
+            const h3 = document.createElement('h3');
+            h3.textContent = card.title;
+            const code = document.createElement('code');
+            code.textContent = typeof card.value === 'string' ? card.value : JSON.stringify(card.value);
+            el.append(h3, code);
             statusRoot.appendChild(el);
           }
         } catch (error) {
