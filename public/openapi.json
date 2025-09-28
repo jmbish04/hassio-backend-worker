@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "https://{account-id}.workers.dev",
+      "url": "https://hassio-backend-worker.hacolby.workers.dev",
       "variables": {
         "account-id": {
           "default": "example"
