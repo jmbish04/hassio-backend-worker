@@ -24,17 +24,17 @@ new_classes = ["HAWebsocketDurableObject"]
 
 [[d1_databases]]
 binding = "RECORDER_DB"
-database_name = "hass_recorder"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_name = "hassio-backend-worker-ha-clone"
+database_id = "b9694e5f-c046-4e3b-9c0b-489c61b4ab37"
 
 [[d1_databases]]
 binding = "CONFIG_DB"
-database_name = "hass_config"
-database_id = "00000000-0000-0000-0000-000000000001"
+database_name = "hassio-backend-worker-config"
+database_id = "c108317d-82e9-4b25-b2ee-bf592321568c"
 
 [[kv_namespaces]]
 binding = "MEMORY_KV"
-id = "00000000000000000000000000000000"
+id = "0e1e45d44414487bb9e17bf53be7fb26"
 
 [ai]
 binding = "AI"
