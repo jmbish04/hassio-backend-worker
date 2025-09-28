@@ -3,7 +3,7 @@
   "info": {
     "title": "Cloudflare Worker Home Assistant Bridge",
     "version": "0.1.0",
-    "description": "API surface that bridges Cloudflare Worker resources with Home Assistant for autom automations, analytics, and AI orchestration."
+    "description": "API surface that bridges Cloudflare Worker resources with Home Assistant for automations, analytics, and AI orchestration."
   },
   "servers": [
     {
