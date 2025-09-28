@@ -1,0 +1,40 @@
+name = "hassio-backend-worker"
+main = "src/index.ts"
+compatibility_date = "2024-05-13"
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+[vars]
+CRON_SCHEDULE = "0 12 * * *"
+AGENT_SYSTEM_PROMPT = "You are an assistant that helps orchestrate a smart home by coordinating Cloudflare Worker resources with Home Assistant."
+VISION_MODEL = "@cf/unum/uform-gen2-qwen-500m"
+CHAT_MODEL = "@cf/meta/llama-3-8b-instruct"
+
+[[durable_objects.bindings]]
+name = "HA_WEBSOCKET_DO"
+class_name = "HAWebsocketDurableObject"
+script_name = "hassio-backend-worker"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["HAWebsocketDurableObject"]
+
+[[d1_databases]]
+binding = "RECORDER_DB"
+database_name = "hassio-backend-worker-ha-clone"
+database_id = "b9694e5f-c046-4e3b-9c0b-489c61b4ab37"
+
+[[d1_databases]]
+binding = "CONFIG_DB"
+database_name = "hassio-backend-worker-config"
+database_id = "c108317d-82e9-4b25-b2ee-bf592321568c"
+
+[[kv_namespaces]]
+binding = "MEMORY_KV"
+id = "0e1e45d44414487bb9e17bf53be7fb26"
+
+[ai]
+binding = "AI"

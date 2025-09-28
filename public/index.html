@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Home Assistant Cloudflare Worker Bridge</title>
+    <style>
+      :root {
+        color-scheme: dark light;
+        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: radial-gradient(circle at top, #0f172a, #020617);
+        color: #f8fafc;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+        padding: 3rem clamp(1rem, 4vw, 6rem);
+        backdrop-filter: blur(32px);
+        background-color: rgba(15, 23, 42, 0.6);
+      }
+      header {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      h1 {
+        font-size: clamp(2.5rem, 5vw, 3.5rem);
+        margin: 0;
+      }
+      p {
+        max-width: 70ch;
+        line-height: 1.6;
+        margin: 0;
+      }
+      a.button {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1.5rem;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #38bdf8, #6366f1);
+        color: #0f172a;
+        text-decoration: none;
+        font-weight: 600;
+        box-shadow: 0 1.5rem 3rem rgba(56, 189, 248, 0.35);
+        transition: transform 150ms ease;
+      }
+      a.button:hover {
+        transform: translateY(-3px);
+      }
+      section {
+        background: rgba(15, 23, 42, 0.6);
+        border-radius: 24px;
+        padding: 2rem clamp(1.5rem, 3vw, 3rem);
+        box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.15);
+        display: grid;
+        gap: 1rem;
+      }
+      ul {
+        margin: 0;
+        padding-left: 1.25rem;
+        display: grid;
+        gap: 0.5rem;
+      }
+      .status {
+        display: grid;
+        gap: 0.5rem;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      }
+      .status-card {
+        background: rgba(15, 23, 42, 0.85);
+        border-radius: 16px;
+        padding: 1rem 1.25rem;
+        box-shadow: inset 0 0 0 1px rgba(94, 234, 212, 0.2);
+      }
+      .status-card h3 {
+        margin: 0 0 0.5rem;
+        font-size: 0.95rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #5eead4;
+      }
+      footer {
+        margin-top: auto;
+        font-size: 0.85rem;
+        opacity: 0.75;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Home Assistant x Cloudflare Worker Control Plane</h1>
+      <p>
+        This Worker exposes a secure automation and analytics control plane for Home Assistant. Durable Objects keep
+        websocket sessions alive, D1 replicas mirror recorder history and configuration metadata, while KV and Cloudflare
+        AI enable agentic workflows that can be orchestrated from a shadcn UI.
+      </p>
+      <a class="button" href="/openapi.json" target="_blank" rel="noreferrer noopener">
+        View OpenAPI definition
+      </a>
+    </header>
+
+    <section>
+      <h2>Highlights</h2>
+      <ul>
+        <li>Full REST and Websocket proxies with API key enforcement.</li>
+        <li>Durable Object maintains a persistent Home Assistant websocket and fan-out to multiple clients.</li>
+        <li>D1 recorder replica mirrors events, states, and statistics for fast analytics.</li>
+        <li>Configuration D1 database stores room aliases, automations, cron jobs, and agent rules.</li>
+        <li>KV namespace captures session memories and scheduled AI reports.</li>
+        <li>Agent endpoint wraps Cloudflare AI to execute natural language smart home intents.</li>
+        <li>Security camera toolkit delivers stills and vision analysis for patrol workflows.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Realtime Status</h2>
+      <div class="status" id="status"></div>
+    </section>
+
+    <section>
+      <h2>Integration Guide</h2>
+      <ul>
+        <li>Provision secrets: <code>HASSIO_URL</code>, <code>HASSIO_LONG_LIVED_TOKEN</code>, and <code>WORKER_API_KEY</code>.</li>
+        <li>Bind KV (<code>MEMORY_KV</code>), D1 (<code>RECORDER_DB</code> &amp; <code>CONFIG_DB</code>), Durable Object, Assets, and AI.</li>
+        <li>Expose REST endpoints to Home Assistant via webhook or RESTful Command integrations.</li>
+        <li>Use <code>/api/ha/websocket</code> for a durable websocket fan-out and subscribe to entity updates.</li>
+        <li>Drive the agent from shadcn UI or automations with <code>/api/agent/chat</code>.</li>
+        <li>Schedule insights by setting <code>CRON_SCHEDULE</code> to your desired cadence.</li>
+      </ul>
+    </section>
+
+    <footer>
+      Worker online status is evaluated on load. Refresh to re-run the health check.
+    </footer>
+
+    <script type="module">
+      async function loadStatus() {
+        try {
+          const res = await fetch('/api/status', {
+            headers: {
+              'x-worker-api-key': 'demo',
+            },
+          });
+          if (!res.ok) throw new Error('Unauthorized');
+          const data = await res.json();
+          const statusRoot = document.getElementById('status');
+          statusRoot.innerHTML = '';
+          const cards = [
+            { title: 'Home Assistant', value: JSON.stringify(data.ha) },
+            { title: 'Websocket', value: JSON.stringify(data.websocket) },
+            { title: 'Config entities', value: data.config?.entityProfiles ?? 0 },
+            { title: 'Cron', value: data.cronSchedule }
+          ];
+          for (const card of cards) {
+            const el = document.createElement('div');
+            el.className = 'status-card';
+            const h3 = document.createElement('h3');
+            h3.textContent = card.title;
+            const code = document.createElement('code');
+            code.textContent = typeof card.value === 'string' ? card.value : JSON.stringify(card.value);
+            el.append(h3, code);
+            statusRoot.appendChild(el);
+          }
+        } catch (error) {
+          const statusRoot = document.getElementById('status');
+          statusRoot.innerHTML = '<div class="status-card"><h3>Offline</h3><p>Unable to reach /api/status. Supply the worker API key to view live data.</p></div>';
+        }
+      }
+      loadStatus();
+    </script>
+  </body>
+</html>
