@@ -1,0 +1,268 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Cloudflare Worker Home Assistant Bridge",
+    "version": "0.1.0",
+    "description": "API surface that bridges Cloudflare Worker resources with Home Assistant for autom automations, analytics, and AI orchestration."
+  },
+  "servers": [
+    {
+      "url": "https://{account-id}.workers.dev",
+      "variables": {
+        "account-id": {
+          "default": "example"
+        }
+      }
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "workerApiKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-worker-api-key"
+      }
+    },
+    "schemas": {
+      "EntityProfile": {
+        "type": "object",
+        "properties": {
+          "entity_id": { "type": "string" },
+          "nickname": { "type": ["string", "null"] },
+          "room": { "type": ["string", "null"] },
+          "preferred_actions": {
+            "type": ["array", "string"],
+            "items": { "type": "string" }
+          },
+          "metadata": {
+            "type": ["object", "null"],
+            "additionalProperties": true
+          }
+        },
+        "required": ["entity_id"]
+      },
+      "AgentChatRequest": {
+        "type": "object",
+        "properties": {
+          "prompt": { "type": "string" },
+          "sessionId": { "type": "string" },
+          "context": { "type": "object", "additionalProperties": true },
+          "instructions": { "type": "string" },
+          "tools": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "required": ["prompt"]
+      }
+    }
+  },
+  "security": [
+    {
+      "workerApiKey": []
+    }
+  ],
+  "paths": {
+    "/api/status": {
+      "get": {
+        "summary": "Return Worker, Durable Object, and Home Assistant health.",
+        "responses": {
+          "200": {
+            "description": "Status payload"
+          }
+        }
+      }
+    },
+    "/api/ha/rest/{path}": {
+      "parameters": [
+        {
+          "name": "path",
+          "in": "path",
+          "required": true,
+          "schema": { "type": "string" }
+        }
+      ],
+      "get": {
+        "summary": "Proxy GET request to Home Assistant REST API",
+        "responses": {
+          "200": { "description": "Home Assistant response" }
+        }
+      },
+      "post": {
+        "summary": "Proxy mutation request to Home Assistant REST API",
+        "responses": {
+          "200": { "description": "Home Assistant response" }
+        }
+      },
+      "delete": {
+        "summary": "Proxy DELETE request to Home Assistant REST API",
+        "responses": {
+          "200": { "description": "Home Assistant response" }
+        }
+      }
+    },
+    "/api/ha/websocket": {
+      "get": {
+        "summary": "Upgrade to a websocket proxied by the durable object.",
+        "responses": {
+          "101": { "description": "Websocket upgrade" }
+        }
+      }
+    },
+    "/api/agent/chat": {
+      "post": {
+        "summary": "Interact with the AI agent to orchestrate automations and queries.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AgentChatRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Agent response" }
+        }
+      }
+    },
+    "/api/entities": {
+      "get": {
+        "summary": "List configured Home Assistant entities with metadata.",
+        "responses": {
+          "200": { "description": "Entity list" }
+        }
+      },
+      "post": {
+        "summary": "Create or update entity metadata records in CONFIG_DB.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  { "$ref": "#/components/schemas/EntityProfile" },
+                  { "type": "array", "items": { "$ref": "#/components/schemas/EntityProfile" } }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Created or updated" }
+        }
+      }
+    },
+    "/api/energy/summary": {
+      "get": {
+        "summary": "Return energy statistics from the recorder replica D1.",
+        "responses": {
+          "200": { "description": "Energy summary" }
+        }
+      }
+    },
+    "/api/logs/errors": {
+      "get": {
+        "summary": "Stream Home Assistant error logs.",
+        "responses": {
+          "200": {
+            "description": "Plain text log output",
+            "content": {
+              "text/plain": {}
+            }
+          }
+        }
+      }
+    },
+    "/api/security/camera/{entityId}/still": {
+      "get": {
+        "summary": "Proxy a still frame from a Home Assistant camera entity.",
+        "parameters": [
+          {
+            "name": "entityId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "JPEG image",
+            "content": {
+              "image/jpeg": {}
+            }
+          }
+        }
+      }
+    },
+    "/api/security/camera/{entityId}/analyze": {
+      "post": {
+        "summary": "Analyze a camera frame with Cloudflare AI vision models.",
+        "parameters": [
+          {
+            "name": "entityId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "prompt": { "type": "string" },
+                  "metadata": { "type": "object", "additionalProperties": true }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "AI insight" }
+        }
+      }
+    },
+    "/api/automations": {
+      "post": {
+        "summary": "Store a worker or hybrid automation blueprint.",
+        "responses": {
+          "201": { "description": "Stored" }
+        }
+      }
+    },
+    "/api/automations/install": {
+      "post": {
+        "summary": "Trigger a Home Assistant service call and optionally persist metadata.",
+        "responses": {
+          "200": { "description": "Service response" }
+        }
+      }
+    },
+    "/api/agent/memories/{sessionId}": {
+      "get": {
+        "summary": "Return cached agent session memories.",
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Memory collection" }
+        }
+      }
+    },
+    "/api/analytics/daily": {
+      "get": {
+        "summary": "Return aggregated worker analytics and cron configuration.",
+        "responses": {
+          "200": { "description": "Analytics payload" }
+        }
+      }
+    }
+  }
+}
