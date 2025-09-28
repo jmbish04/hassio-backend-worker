@@ -10,6 +10,8 @@ bucket = "./public"
 [vars]
 CRON_SCHEDULE = "0 12 * * *"
 AGENT_SYSTEM_PROMPT = "You are an assistant that helps orchestrate a smart home by coordinating Cloudflare Worker resources with Home Assistant."
+VISION_MODEL = "@cf/unum/uform-gen2-qwen-500m"
+CHAT_MODEL = "@cf/meta/llama-3-8b-instruct"
 
 [[durable_objects.bindings]]
 name = "HA_WEBSOCKET_DO"
