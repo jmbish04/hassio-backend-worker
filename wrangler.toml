@@ -7,6 +7,9 @@ compatibility_flags = ["nodejs_compat"]
 directory = "./public"
 binding = "ASSETS"
 
+[observability]
+enabled = true
+
 [vars]
 CRON_SCHEDULE = "0 12 * * *"
 AGENT_SYSTEM_PROMPT = "You are an assistant that helps orchestrate a smart home by coordinating Cloudflare Worker resources with Home Assistant."
