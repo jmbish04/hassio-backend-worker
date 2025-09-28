@@ -480,3 +480,5 @@ export default {
     ctx.waitUntil(env.MEMORY_KV.put(`daily-report:${report.generatedAt}`, JSON.stringify(report), { expirationTtl: 60 * 60 * 24 * 7 }));
   },
 };
+// Export the Durable Object class for Wrangler to bind.
+export { HAWebsocketDurableObject } from "./durable/haWebsocket";
