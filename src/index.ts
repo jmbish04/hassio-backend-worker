@@ -1,3 +1,9 @@
+/**
+ * @file This is the main entry point for the Cloudflare Worker.
+ * It defines all API routes using `itty-router`, handles authentication,
+ * and orchestrates interactions with Home Assistant, Durable Objects, D1, KV, and the AI service.
+ */
+
 import { Router } from "itty-router";
 import type { Env } from "./types";
 import { HomeAssistantClient } from "./lib/haClient";
@@ -5,6 +11,12 @@ import { HassAgent } from "./lib/agent";
 
 const router = Router();
 
+/**
+ * A helper function to create a Response object with a JSON body and appropriate headers.
+ * @param {unknown} data - The data to be serialized into JSON.
+ * @param {ResponseInit} [init={}] - Optional response initialization options.
+ * @returns {Response} A Response object.
+ */
 const json = (data: unknown, init: ResponseInit = {}): Response => {
   const headers = new Headers(init.headers);
   headers.set("Content-Type", "application/json");
@@ -15,21 +27,34 @@ const json = (data: unknown, init: ResponseInit = {}): Response => {
   });
 };
 
+/** Type alias for a standard request handler. */
 type Handler = (request: Request & { params?: Record<string, string> }, env: Env, ctx: ExecutionContext) => Promise<Response> | Response;
 
+/** Type alias for a handler that requires authentication. */
 type AuthenticatedHandler = Handler;
 
+/**
+ * A middleware function that wraps a handler to enforce API key authentication.
+ * It checks for an API key in the headers before allowing the handler to execute.
+ * @param {AuthenticatedHandler} handler - The handler to protect with authentication.
+ * @returns {Handler} The wrapped handler with the authentication check.
+ */
 const withAuth = (handler: AuthenticatedHandler): Handler => {
   return async (request, env, ctx) => {
     const apiKey = extractApiKey(request.headers);
     if (!apiKey || apiKey !== env.WORKER_API_KEY) {
       return new Response("Unauthorized", { status: 401 });
     }
-
     return handler(request, env, ctx);
   };
 };
 
+/**
+ * Extracts an API key from request headers.
+ * It checks for 'x-worker-api-key' or 'Authorization: Bearer <key>'.
+ * @param {Headers} headers - The request headers.
+ * @returns {string | null} The extracted API key or null if not found.
+ */
 const extractApiKey = (headers: Headers): string | null => {
   const headerKey = headers.get("x-worker-api-key");
   if (headerKey) return headerKey;
@@ -40,6 +65,10 @@ const extractApiKey = (headers: Headers): string | null => {
   return null;
 };
 
+/**
+ * GET /api/status
+ * Provides a health check of the worker and its connected services.
+ */
 router.get(
   "/api/status",
   withAuth(async (request, env) => {
@@ -64,6 +93,10 @@ router.get(
   }),
 );
 
+/**
+ * ALL /api/ha/rest/*
+ * Acts as an authenticated proxy to the Home Assistant REST API.
+ */
 router.all(
   "/api/ha/rest/*",
   withAuth(async (request, env) => {
@@ -80,7 +113,7 @@ router.all(
 
     if (request.method !== "GET" && request.method !== "HEAD") {
       if (contentType.includes("application/json")) {
-        body = JSON.stringify(await request.json().catch(() => ({ }))); // swallow invalid json
+        body = JSON.stringify(await request.json().catch(() => ({}))); // swallow invalid json
       } else if (contentType.startsWith("text/")) {
         body = await request.text();
       } else {
@@ -108,6 +141,10 @@ router.all(
   }),
 );
 
+/**
+ * GET /api/ha/websocket
+ * Upgrades the HTTP request to a WebSocket connection, managed by a Durable Object.
+ */
 router.get(
   "/api/ha/websocket",
   withAuth(async (request, env) => {
@@ -122,6 +159,10 @@ router.get(
   }),
 );
 
+/**
+ * POST /api/agent/chat
+ * Main endpoint for interacting with the AI agent.
+ */
 router.post(
   "/api/agent/chat",
   withAuth(async (request, env) => {
@@ -131,6 +172,10 @@ router.post(
   }),
 );
 
+/**
+ * GET /api/entities
+ * Retrieves all configured entity profiles from the database.
+ */
 router.get(
   "/api/entities",
   withAuth(async (request, env) => {
@@ -141,6 +186,10 @@ router.get(
   }),
 );
 
+/**
+ * POST /api/entities
+ * Creates or updates one or more entity profiles in the database.
+ */
 router.post(
   "/api/entities",
   withAuth(async (request, env) => {
@@ -169,6 +218,10 @@ router.post(
   }),
 );
 
+/**
+ * GET /api/energy/summary
+ * Retrieves a summary of recent energy statistics from the recorder database.
+ */
 router.get(
   "/api/energy/summary",
   withAuth(async (request, env) => {
@@ -185,6 +238,10 @@ router.get(
   }),
 );
 
+/**
+ * GET /api/logs/errors
+ * Fetches the plain text error log from Home Assistant.
+ */
 router.get(
   "/api/logs/errors",
   withAuth(async (request, env) => {
@@ -197,6 +254,10 @@ router.get(
   }),
 );
 
+/**
+ * GET /api/security/camera/:entityId/still
+ * Fetches a still JPEG image from a specified camera entity.
+ */
 router.get(
   "/api/security/camera/:entityId/still",
   withAuth(async (request, env) => {
@@ -213,6 +274,10 @@ router.get(
   }),
 );
 
+/**
+ * POST /api/security/camera/:entityId/analyze
+ * Fetches a camera image and sends it to a vision AI model for analysis.
+ */
 router.post(
   "/api/security/camera/:entityId/analyze",
   withAuth(async (request, env) => {
@@ -221,9 +286,7 @@ router.post(
       return new Response("Entity not provided", { status: 400 });
     }
 
-    const payload = (await request
-      .json()
-      .catch(() => ({ prompt: "Analyze scene" }))) as Partial<{
+    const payload = (await request.json().catch(() => ({ prompt: "Analyze scene" }))) as Partial<{
       prompt: string;
       metadata: Record<string, unknown>;
     }>;
@@ -244,6 +307,10 @@ router.post(
   }),
 );
 
+/**
+ * POST /api/automations
+ * Creates a new automation blueprint in the configuration database.
+ */
 router.post(
   "/api/automations",
   withAuth(async (request, env) => {
@@ -266,6 +333,10 @@ router.post(
   }),
 );
 
+/**
+ * POST /api/automations/install
+ * Installs or triggers an automation by calling a Home Assistant service.
+ */
 router.post(
   "/api/automations/install",
   withAuth(async (request, env) => {
@@ -292,30 +363,35 @@ router.post(
   }),
 );
 
-router.post(
-  "/api/hooks/trigger",
-  async (request, env, ctx) => {
-    // Webhooks are allowed without API key but validated with secret query param.
-    const url = new URL(request.url);
-    if (url.searchParams.get("key") !== env.WORKER_API_KEY) {
-      return new Response("Unauthorized", { status: 401 });
-    }
+/**
+ * POST /api/hooks/trigger
+ * A webhook receiver to ingest external events, secured by a query parameter secret.
+ */
+router.post("/api/hooks/trigger", async (request, env, ctx) => {
+  // Webhooks are allowed without API key but validated with secret query param.
+  const url = new URL(request.url);
+  if (url.searchParams.get("key") !== env.WORKER_API_KEY) {
+    return new Response("Unauthorized", { status: 401 });
+  }
 
-    const payload = (await request.json().catch(() => ({}))) as Record<string, unknown>;
-    const eventType = typeof payload.type === "string" ? payload.type : "worker_event";
-    ctx.waitUntil(
-      env.RECORDER_DB.prepare(
-        `INSERT INTO events(event_type, event_data, origin, time_fired)
-         VALUES (?1, ?2, 'worker', CURRENT_TIMESTAMP)`,
-      )
-        .bind(eventType, JSON.stringify(payload))
-        .run(),
-    );
+  const payload = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+  const eventType = typeof payload.type === "string" ? payload.type : "worker_event";
+  ctx.waitUntil(
+    env.RECORDER_DB.prepare(
+      `INSERT INTO events(event_type, event_data, origin, time_fired)
+       VALUES (?1, ?2, 'worker', CURRENT_TIMESTAMP)`,
+    )
+      .bind(eventType, JSON.stringify(payload))
+      .run(),
+  );
 
-    return json({ received: true });
-  },
-);
+  return json({ received: true });
+});
 
+/**
+ * GET /api/agent/memories/:sessionId
+ * Retrieves the conversation history for a specific agent session.
+ */
 router.get(
   "/api/agent/memories/:sessionId",
   withAuth(async (request, env) => {
@@ -328,6 +404,10 @@ router.get(
   }),
 );
 
+/**
+ * GET /api/analytics/daily
+ * Fetches daily analytics, including scheduled tasks and recent event activity.
+ */
 router.get(
   "/api/analytics/daily",
   withAuth(async (request, env) => {
@@ -341,6 +421,10 @@ router.get(
   }),
 );
 
+/**
+ * ALL *
+ * A catch-all route to serve static assets for GET/HEAD requests, otherwise returns 404.
+ */
 router.all("*", async (request, env) => {
   if (request.method === "GET" || request.method === "HEAD") {
     return env.ASSETS.fetch(request);
@@ -349,6 +433,13 @@ router.all("*", async (request, env) => {
 });
 
 export default {
+  /**
+   * The main entry point for all incoming HTTP requests to the Worker.
+   * @param {Request} request - The incoming request.
+   * @param {Env} env - The environment bindings.
+   * @param {ExecutionContext} ctx - The execution context.
+   * @returns {Promise<Response> | Response} The response to the request.
+   */
   fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> | Response {
     const url = new URL(request.url);
     if (url.pathname === "/" || url.pathname.startsWith("/openapi")) {
@@ -357,6 +448,14 @@ export default {
     }
     return router.handle(request, env, ctx);
   },
+
+  /**
+   * The entry point for scheduled (cron) events.
+   * @param {ScheduledController} controller - The controller for the scheduled event.
+   * @param {Env} env - The environment bindings.
+   * @param {ExecutionContext} ctx - The execution context.
+   * @returns {Promise<void>}
+   */
   async scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
     if (!controller.cron || controller.cron !== env.CRON_SCHEDULE) {
       return;
@@ -377,6 +476,7 @@ export default {
       errors: logs.data?.split("\n").slice(0, 50) ?? [],
     };
 
+    // Store the daily report in KV for 7 days.
     ctx.waitUntil(env.MEMORY_KV.put(`daily-report:${report.generatedAt}`, JSON.stringify(report), { expirationTtl: 60 * 60 * 24 * 7 }));
   },
 };
