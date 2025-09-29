@@ -307,25 +307,26 @@ router.get(
 router.post(
   "/api/energy/pge/usage-cost",
   withAuth(async (request) => {
-    let payload: UsageCostPayload;
+    const UsageCostPayloadSchema = z.object({
+      startTimestamp: z.number().finite(),
+      endTimestamp: z.number().finite(),
+      usageAmount: z.number().finite(),
+      energyFormat: z.string().optional(),
+    });
+
+    let body: unknown;
     try {
-      payload = (await request.json()) as UsageCostPayload;
+      body = await request.json();
     } catch (error) {
       return json({ error: "Invalid JSON payload" }, { status: 400 });
     }
 
-    const { startTimestamp, endTimestamp, usageAmount, energyFormat } = payload;
-
-    if (
-      !Number.isFinite(startTimestamp) ||
-      !Number.isFinite(endTimestamp) ||
-      !Number.isFinite(usageAmount)
-    ) {
-      return json(
-        { error: "startTimestamp, endTimestamp, and usageAmount must be valid numbers" },
-        { status: 400 },
-      );
+    const parsed = UsageCostPayloadSchema.safeParse(body);
+    if (!parsed.success) {
+      return json({ error: "Invalid payload", issues: parsed.error.format() }, { status: 400 });
     }
+
+    const { startTimestamp, endTimestamp, usageAmount, energyFormat } = parsed.data;
 
     return proxyPgeRequest("/usageCost", {
       method: "POST",
