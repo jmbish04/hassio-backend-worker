@@ -30,6 +30,9 @@
         font-size: clamp(2.5rem, 5vw, 3.5rem);
         margin: 0;
       }
+      h2 {
+        margin-bottom: 0.5rem;
+      }
       p {
         max-width: 70ch;
         line-height: 1.6;
@@ -65,23 +68,200 @@
         display: grid;
         gap: 0.5rem;
       }
+      .status-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem 1.5rem;
+        align-items: center;
+        background: rgba(15, 23, 42, 0.75);
+        border-radius: 16px;
+        padding: 1rem 1.5rem;
+        box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.12);
+      }
+      .status-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-size: 0.8rem;
+        font-weight: 600;
+      }
+      .status-dot {
+        width: 0.75rem;
+        height: 0.75rem;
+        border-radius: 999px;
+        background: #facc15;
+        box-shadow: 0 0 0 6px rgba(250, 204, 21, 0.15);
+        transition: background 200ms ease, box-shadow 200ms ease;
+      }
+      .status-indicator.online .status-dot {
+        background: #34d399;
+        box-shadow: 0 0 0 6px rgba(52, 211, 153, 0.2);
+      }
+      .status-indicator.offline .status-dot {
+        background: #f87171;
+        box-shadow: 0 0 0 6px rgba(248, 113, 113, 0.2);
+      }
+      .status-indicator.checking .status-dot {
+        background: #facc15;
+        box-shadow: 0 0 0 6px rgba(250, 204, 21, 0.2);
+      }
+      .status-indicator.error .status-dot {
+        background: #f97316;
+        box-shadow: 0 0 0 6px rgba(249, 115, 22, 0.2);
+      }
+      .status-meta .status-countdown,
+      .status-meta .status-updated {
+        font-variant-numeric: tabular-nums;
+        opacity: 0.85;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+      }
+      .status-meta span[data-highlight] {
+        font-weight: 600;
+        letter-spacing: 0.04em;
+      }
       .status {
         display: grid;
         gap: 0.5rem;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       }
       .status-card {
         background: rgba(15, 23, 42, 0.85);
         border-radius: 16px;
         padding: 1rem 1.25rem;
         box-shadow: inset 0 0 0 1px rgba(94, 234, 212, 0.2);
+        display: grid;
+        gap: 0.5rem;
+      }
+      .status-card.offline {
+        box-shadow: inset 0 0 0 1px rgba(248, 113, 113, 0.35);
       }
       .status-card h3 {
-        margin: 0 0 0.5rem;
+        margin: 0;
         font-size: 0.95rem;
         text-transform: uppercase;
         letter-spacing: 0.08em;
         color: #5eead4;
+      }
+      .status-card code {
+        display: block;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-family: "SFMono-Regular", "Fira Code", "Menlo", monospace;
+        font-size: 0.85rem;
+        line-height: 1.5;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.4rem 0.85rem;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-weight: 600;
+        background: rgba(148, 163, 184, 0.25);
+        color: #e2e8f0;
+        transition: background 200ms ease, color 200ms ease;
+      }
+      .badge.online {
+        background: rgba(52, 211, 153, 0.18);
+        color: #34d399;
+      }
+      .badge.offline {
+        background: rgba(248, 113, 113, 0.18);
+        color: #f87171;
+      }
+      .badge.connecting {
+        background: rgba(59, 130, 246, 0.2);
+        color: #60a5fa;
+      }
+      .badge.error {
+        background: rgba(249, 115, 22, 0.2);
+        color: #fb923c;
+      }
+      .ws-console {
+        background: rgba(15, 23, 42, 0.75);
+        border-radius: 20px;
+        padding: 1.5rem clamp(1rem, 2vw, 2rem);
+        box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.18);
+        display: grid;
+        gap: 1.25rem;
+      }
+      .ws-console-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+      .ws-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+      .ws-log {
+        font-family: "SFMono-Regular", "Fira Code", "Menlo", monospace;
+        background: rgba(2, 6, 23, 0.85);
+        border-radius: 16px;
+        padding: 1rem 1.25rem;
+        height: clamp(220px, 35vh, 420px);
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        scroll-behavior: smooth;
+      }
+      .ws-log::-webkit-scrollbar {
+        width: 8px;
+      }
+      .ws-log::-webkit-scrollbar-thumb {
+        background: rgba(148, 163, 184, 0.25);
+        border-radius: 999px;
+      }
+      .ws-entry {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.75rem;
+        font-size: 0.85rem;
+        line-height: 1.5;
+      }
+      .ws-entry time {
+        font-variant-numeric: tabular-nums;
+        color: rgba(226, 232, 240, 0.65);
+        padding-top: 0.1rem;
+      }
+      .ws-entry pre {
+        margin: 0;
+        white-space: pre-wrap;
+        word-break: break-word;
+        color: #e2e8f0;
+      }
+      .ws-entry.system pre {
+        color: #38bdf8;
+      }
+      .ws-entry.error pre {
+        color: #f87171;
+      }
+      .ws-entry.message pre {
+        color: #e2e8f0;
+      }
+      button.ws-button {
+        background: transparent;
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        color: #e2e8f0;
+        border-radius: 999px;
+        padding: 0.45rem 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
+      }
+      button.ws-button:hover {
+        background: rgba(148, 163, 184, 0.2);
       }
       footer {
         margin-top: auto;
@@ -118,7 +298,28 @@
 
     <section>
       <h2>Realtime Status</h2>
+      <div class="status-meta">
+        <div class="status-indicator checking" id="service-indicator">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span id="service-status-text">Checking…</span>
+        </div>
+        <div class="status-countdown">Refreshing in <span data-highlight id="refresh-countdown">10</span>s</div>
+        <div class="status-updated">Last updated <span data-highlight id="last-updated">—</span></div>
+      </div>
       <div class="status" id="status"></div>
+    </section>
+
+    <section>
+      <h2>Websocket Feed</h2>
+      <div class="ws-console">
+        <div class="ws-console-header">
+          <span class="badge connecting" id="ws-state">Connecting…</span>
+          <div class="ws-actions">
+            <button class="ws-button" type="button" id="ws-clear">Clear log</button>
+          </div>
+        </div>
+        <div class="ws-log" id="ws-log" role="log" aria-live="polite"></div>
+      </div>
     </section>
 
     <section>
@@ -134,43 +335,199 @@
     </section>
 
     <footer>
-      Worker online status is evaluated on load. Refresh to re-run the health check.
+      Worker health automatically refreshes every 10 seconds and the websocket feed streams live events in real time.
     </footer>
 
     <script type="module">
-      async function loadStatus() {
-        try {
-          const res = await fetch('/api/status', {
-            headers: {
-              'x-worker-api-key': 'demo',
-            },
-          });
-          if (!res.ok) throw new Error('Unauthorized');
-          const data = await res.json();
-          const statusRoot = document.getElementById('status');
-          statusRoot.innerHTML = '';
-          const cards = [
-            { title: 'Home Assistant', value: JSON.stringify(data.ha) },
-            { title: 'Websocket', value: JSON.stringify(data.websocket) },
-            { title: 'Config entities', value: data.config?.entityProfiles ?? 0 },
-            { title: 'Cron', value: data.cronSchedule }
-          ];
-          for (const card of cards) {
-            const el = document.createElement('div');
-            el.className = 'status-card';
-            const h3 = document.createElement('h3');
-            h3.textContent = card.title;
-            const code = document.createElement('code');
-            code.textContent = typeof card.value === 'string' ? card.value : JSON.stringify(card.value);
-            el.append(h3, code);
-            statusRoot.appendChild(el);
+      const API_KEY = "demo";
+      const REFRESH_INTERVAL_SECONDS = 10;
+      const statusRoot = document.getElementById("status");
+      const serviceIndicator = document.getElementById("service-indicator");
+      const serviceStatusText = document.getElementById("service-status-text");
+      const countdownEl = document.getElementById("refresh-countdown");
+      const lastUpdatedEl = document.getElementById("last-updated");
+      const wsStateBadge = document.getElementById("ws-state");
+      const wsLog = document.getElementById("ws-log");
+      const wsClearButton = document.getElementById("ws-clear");
+
+      let countdown = REFRESH_INTERVAL_SECONDS;
+      let statusLoading = false;
+      let countdownInterval;
+      let websocket;
+      let reconnectTimeout;
+
+      const MAX_LOG_ENTRIES = 200;
+      const RECONNECT_DELAY = 5000;
+
+      const updateCountdownDisplay = (value) => {
+        countdownEl.textContent = String(value).padStart(2, "0");
+      };
+
+      const setServiceState = (state, label) => {
+        serviceIndicator.className = `status-indicator ${state}`;
+        serviceStatusText.textContent = label;
+      };
+
+      const setWsState = (state, label) => {
+        wsStateBadge.className = `badge ${state}`;
+        wsStateBadge.textContent = label;
+      };
+
+      const appendLog = (kind, payload) => {
+        if (!wsLog) return;
+        const entry = document.createElement("div");
+        entry.className = `ws-entry ${kind}`;
+        const time = document.createElement("time");
+        const now = new Date();
+        time.dateTime = now.toISOString();
+        time.textContent = now.toLocaleTimeString();
+        const pre = document.createElement("pre");
+        if (typeof payload === "string") {
+          pre.textContent = payload;
+        } else {
+          try {
+            pre.textContent = JSON.stringify(payload, null, 2);
+          } catch {
+            pre.textContent = String(payload);
           }
-        } catch (error) {
-          const statusRoot = document.getElementById('status');
-          statusRoot.innerHTML = '<div class="status-card"><h3>Offline</h3><p>Unable to reach /api/status. Supply the worker API key to view live data.</p></div>';
         }
-      }
+        entry.append(time, pre);
+        wsLog.append(entry);
+        while (wsLog.children.length > MAX_LOG_ENTRIES) {
+          wsLog.removeChild(wsLog.firstChild);
+        }
+        wsLog.scrollTop = wsLog.scrollHeight;
+      };
+
+      const renderStatusCards = (data) => {
+        statusRoot.innerHTML = "";
+        const cards = [
+          { title: "Home Assistant", value: data.ha },
+          { title: "Websocket", value: data.websocket },
+          { title: "Config entities", value: data.config?.entityProfiles ?? 0 },
+          { title: "Cron", value: data.cronSchedule ?? "—" }
+        ];
+        for (const card of cards) {
+          const el = document.createElement("div");
+          el.className = "status-card";
+          const h3 = document.createElement("h3");
+          h3.textContent = card.title;
+          const code = document.createElement("code");
+          if (
+            typeof card.value === "string" ||
+            typeof card.value === "number" ||
+            typeof card.value === "boolean"
+          ) {
+            code.textContent = String(card.value);
+          } else {
+            code.textContent = JSON.stringify(card.value, null, 2);
+          }
+          el.append(h3, code);
+          statusRoot.append(el);
+        }
+      };
+
+      const loadStatus = async () => {
+        if (statusLoading) return;
+        statusLoading = true;
+        setServiceState("checking", "Checking…");
+        try {
+          const res = await fetch("/api/status", {
+            headers: {
+              "x-worker-api-key": API_KEY
+            }
+          });
+          if (!res.ok) throw new Error(`Request failed with status ${res.status}`);
+          const data = await res.json();
+          renderStatusCards(data);
+          setServiceState("online", "Online");
+          lastUpdatedEl.textContent = new Date().toLocaleTimeString();
+        } catch (error) {
+          setServiceState("offline", "Offline");
+          lastUpdatedEl.textContent = "—";
+          const errorMessage = error instanceof Error ? error.message : "Unable to reach /api/status.";
+          statusRoot.innerHTML = `<div class="status-card offline"><h3>Error</h3><code>${errorMessage}</code></div>`;
+        } finally {
+          countdown = REFRESH_INTERVAL_SECONDS;
+          updateCountdownDisplay(countdown);
+          statusLoading = false;
+        }
+      };
+
+      const startCountdown = () => {
+        updateCountdownDisplay(countdown);
+        if (countdownInterval) clearInterval(countdownInterval);
+        countdownInterval = setInterval(() => {
+          if (countdown > 0) {
+            countdown -= 1;
+            updateCountdownDisplay(countdown);
+          } else {
+            loadStatus();
+          }
+        }, 1000);
+      };
+
+      const connectWebSocket = () => {
+        if (reconnectTimeout) {
+          clearTimeout(reconnectTimeout);
+          reconnectTimeout = undefined;
+        }
+        const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+        const url = `${protocol}//${window.location.host}/api/ha/websocket?apiKey=${encodeURIComponent(API_KEY)}`;
+        setWsState("connecting", "Connecting…");
+        appendLog("system", "Connecting to Home Assistant websocket…");
+        try {
+          websocket = new WebSocket(url);
+        } catch (error) {
+          appendLog("error", error instanceof Error ? error.message : "Failed to create websocket connection.");
+          setWsState("error", "Error");
+          reconnectTimeout = window.setTimeout(connectWebSocket, RECONNECT_DELAY);
+          return;
+        }
+
+        websocket.addEventListener("open", () => {
+          setWsState("online", "Connected");
+          appendLog("system", "Websocket connection established.");
+        });
+
+        websocket.addEventListener("message", (event) => {
+          let message = event.data;
+          if (typeof message === "string") {
+            try {
+              const parsed = JSON.parse(message);
+              message = parsed;
+            } catch {
+              // leave as raw string
+            }
+          }
+          appendLog("message", message);
+        });
+
+        websocket.addEventListener("close", () => {
+          setWsState("offline", "Disconnected");
+          appendLog("system", "Websocket connection closed. Reconnecting in 5s…");
+          websocket = undefined;
+          reconnectTimeout = window.setTimeout(connectWebSocket, RECONNECT_DELAY);
+        });
+
+        websocket.addEventListener("error", (event) => {
+          const errorMessage = event instanceof ErrorEvent ? event.message : "Websocket error encountered.";
+          appendLog("error", errorMessage);
+          setWsState("error", "Error");
+          if (websocket && websocket.readyState < WebSocket.CLOSING) {
+            websocket.close();
+          }
+        });
+      };
+
+      wsClearButton?.addEventListener("click", () => {
+        wsLog.innerHTML = "";
+      });
+
+      updateCountdownDisplay(countdown);
+      startCountdown();
       loadStatus();
+      connectWebSocket();
     </script>
   </body>
 </html>

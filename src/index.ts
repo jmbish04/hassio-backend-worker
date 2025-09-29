@@ -28,7 +28,11 @@ const json = (data: unknown, init: ResponseInit = {}): Response => {
 };
 
 /** Type alias for a standard request handler. */
-type Handler = (request: Request & { params?: Record<string, string> }, env: Env, ctx: ExecutionContext) => Promise<Response> | Response;
+type Handler = (
+  request: Request & { params?: Record<string, string> },
+  env: Env,
+  ctx: ExecutionContext,
+) => Promise<Response> | Response;
 
 /** Type alias for a handler that requires authentication. */
 type AuthenticatedHandler = Handler;
@@ -41,7 +45,8 @@ type AuthenticatedHandler = Handler;
  */
 const withAuth = (handler: AuthenticatedHandler): Handler => {
   return async (request, env, ctx) => {
-    const apiKey = extractApiKey(request.headers);
+    const url = new URL(request.url);
+    const apiKey = extractApiKey(request.headers, url);
     if (!apiKey || apiKey !== env.WORKER_API_KEY) {
       return new Response("Unauthorized", { status: 401 });
     }
@@ -50,21 +55,26 @@ const withAuth = (handler: AuthenticatedHandler): Handler => {
 };
 
 /**
- * Extracts an API key from request headers.
- * It checks for 'x-worker-api-key' or 'Authorization: Bearer <key>'.
+ * Extracts an API key from request headers or query parameters.
+ * It checks for 'x-worker-api-key', 'Authorization: Bearer <key>', or supported query params.
  * @param {Headers} headers - The request headers.
+ * @param {URL} [url] - The request URL for extracting query parameters.
  * @returns {string | null} The extracted API key or null if not found.
  */
-const extractApiKey = (headers: Headers): string | null => {
+const extractApiKey = (headers: Headers, url?: URL): string | null => {
   const headerKey = headers.get("x-worker-api-key");
   if (headerKey) return headerKey;
   const auth = headers.get("authorization");
   if (auth?.startsWith("Bearer ")) {
     return auth.slice("Bearer ".length);
   }
+  if (url) {
+    const queryKey =
+      url.searchParams.get("x-worker-api-key") ?? url.searchParams.get("apiKey") ?? url.searchParams.get("token");
+    if (queryKey) return queryKey;
+  }
   return null;
 };
-
 /**
  * GET /api/status
  * Provides a health check of the worker and its connected services.
