@@ -11,6 +11,49 @@ import { HassAgent } from "./lib/agent";
 
 const router = Router();
 
+const PGE_API_BASE_URL = "https://pge-ev2a-rate-api.hacolby.workers.dev/";
+
+type PgeFetchOptions = RequestInit & { query?: Record<string, string | number | boolean | undefined> };
+
+const buildPgeUrl = (path: string, query?: PgeFetchOptions["query"]): string => {
+  const sanitizedPath = path.replace(/^\/+/, "");
+  const url = new URL(sanitizedPath, PGE_API_BASE_URL);
+  if (query) {
+    for (const [key, value] of Object.entries(query)) {
+      if (value !== undefined) {
+        url.searchParams.set(key, String(value));
+      }
+    }
+  }
+  return url.toString();
+};
+
+const proxyPgeRequest = async (path: string, init: PgeFetchOptions = {}): Promise<Response> => {
+  const { query, headers: initHeaders, ...rest } = init;
+  const url = buildPgeUrl(path, query);
+  const headers = new Headers(initHeaders);
+  if (!headers.has("accept")) {
+    headers.set("accept", "application/json");
+  }
+  if (rest.body && !headers.has("content-type")) {
+    headers.set("content-type", "application/json");
+  }
+
+  const response = await fetch(url, { ...rest, headers });
+  const responseHeaders = new Headers(response.headers);
+  return new Response(response.body, {
+    status: response.status,
+    headers: responseHeaders,
+  });
+};
+
+interface UsageCostPayload {
+  startTimestamp: number;
+  endTimestamp: number;
+  usageAmount: number;
+  energyFormat?: string;
+}
+
 /**
  * A helper function to create a Response object with a JSON body and appropriate headers.
  * @param {unknown} data - The data to be serialized into JSON.
@@ -236,6 +279,97 @@ router.get(
 
     return json({ energy: results });
   }),
+);
+
+router.get(
+  "/api/energy/pge/current-rate",
+  withAuth(async () => proxyPgeRequest("/currentRate")),
+);
+
+router.get(
+  "/api/energy/pge/rate-at",
+  withAuth(async (request) => {
+    const url = new URL(request.url);
+    const timestampParam = url.searchParams.get("timestamp");
+    if (!timestampParam) {
+      return json({ error: "timestamp query parameter is required" }, { status: 400 });
+    }
+
+    const timestamp = Number(timestampParam);
+    if (!Number.isFinite(timestamp)) {
+      return json({ error: "timestamp must be a valid number" }, { status: 400 });
+    }
+
+    return proxyPgeRequest("/rateAt", { query: { timestamp: timestamp.toString() } });
+  }),
+);
+
+router.post(
+  "/api/energy/pge/usage-cost",
+  withAuth(async (request) => {
+    let payload: UsageCostPayload;
+    try {
+      payload = (await request.json()) as UsageCostPayload;
+    } catch (error) {
+      return json({ error: "Invalid JSON payload" }, { status: 400 });
+    }
+
+    const { startTimestamp, endTimestamp, usageAmount, energyFormat } = payload;
+
+    if (
+      !Number.isFinite(startTimestamp) ||
+      !Number.isFinite(endTimestamp) ||
+      !Number.isFinite(usageAmount)
+    ) {
+      return json(
+        { error: "startTimestamp, endTimestamp, and usageAmount must be valid numbers" },
+        { status: 400 },
+      );
+    }
+
+    return proxyPgeRequest("/usageCost", {
+      method: "POST",
+      body: JSON.stringify({ startTimestamp, endTimestamp, usageAmount, energyFormat }),
+    });
+  }),
+);
+
+router.get(
+  "/api/energy/pge/usage",
+  withAuth(async (request) => {
+    const url = new URL(request.url);
+    const startDate = url.searchParams.get("startDate");
+    const endDate = url.searchParams.get("endDate");
+    if (!startDate || !endDate) {
+      return json({ error: "startDate and endDate query parameters are required" }, { status: 400 });
+    }
+
+    return proxyPgeRequest("/usage", { query: { startDate, endDate } });
+  }),
+);
+
+router.get(
+  "/api/energy/pge/usage/:entityId",
+  withAuth(async (request) => {
+    const entityId = request.params?.entityId;
+    if (!entityId) {
+      return json({ error: "entityId parameter is required" }, { status: 400 });
+    }
+
+    const url = new URL(request.url);
+    const startDate = url.searchParams.get("startDate");
+    const endDate = url.searchParams.get("endDate");
+    if (!startDate || !endDate) {
+      return json({ error: "startDate and endDate query parameters are required" }, { status: 400 });
+    }
+
+    return proxyPgeRequest(`/usage/${encodeURIComponent(entityId)}`, { query: { startDate, endDate } });
+  }),
+);
+
+router.get(
+  "/api/energy/pge/sensor/info",
+  withAuth(async () => proxyPgeRequest("/sensor/info")),
 );
 
 /**
