@@ -445,8 +445,8 @@
         } catch (error) {
           setServiceState("offline", "Offline");
           lastUpdatedEl.textContent = "—";
-          statusRoot.innerHTML =
-            '<div class="status-card offline"><h3>Offline</h3><p>Unable to reach /api/status. Supply the worker API key to view live data.</p></div>';
+          const errorMessage = error instanceof Error ? error.message : "Unable to reach /api/status.";
+          statusRoot.innerHTML = `<div class="status-card offline"><h3>Error</h3><code>${errorMessage}</code></div>`;
         } finally {
           countdown = REFRESH_INTERVAL_SECONDS;
           updateCountdownDisplay(countdown);
